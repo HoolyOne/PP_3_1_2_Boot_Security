@@ -5,9 +5,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import ru.kata.spring.boot_security.demo.model.Role;
-import ru.kata.spring.boot_security.demo.model.User;
 import ru.kata.spring.boot_security.demo.repository.RoleRepository;
-import ru.kata.spring.boot_security.demo.repository.UserRepository;
+import ru.kata.spring.boot_security.demo.service.UserService;
 
 import java.util.Set;
 
@@ -16,7 +15,7 @@ public class DataInitialiser {
 
     @Bean
     public CommandLineRunner loadData(RoleRepository roleRepository,
-                                      UserRepository userRepository,
+                                      UserService userService,
                                       PasswordEncoder passwordEncoder) {
         return (args) -> {
             if (roleRepository.findByName("ROLE_ADMIN") == null) {
@@ -28,25 +27,15 @@ public class DataInitialiser {
             Role adminRole = roleRepository.findByName("ROLE_ADMIN");
             Role userRole = roleRepository.findByName("ROLE_USER");
 
-            if (userRepository.findByUsername("admin").isEmpty()) {
-                User admin = new User();
-                admin.setUsername("admin");
-                admin.setPassword(passwordEncoder.encode("admin"));
-                admin.setName("Александр");
-                admin.setSurname("Мухин");
-                admin.setAge(29);
-                admin.setRoles(Set.of(adminRole,userRole));
-                userRepository.save(admin);
+            if (userService.listUsers().stream().noneMatch(u -> u.getUsername().equals("admin"))) {
+                userService.createUserWithRoles(
+                        "Александр", "Мухин", 29, "admin", "admin", Set.of(adminRole, userRole)
+                );
             }
-            if (userRepository.findByUsername("user").isEmpty()) {
-                User user = new User();
-                user.setUsername("user");
-                user.setPassword(passwordEncoder.encode("user"));
-                user.setName("Иван");
-                user.setSurname("Иванов");
-                user.setAge(30);
-                user.setRoles(Set.of(userRole));
-                userRepository.save(user);
+            if (userService.listUsers().stream().noneMatch(u -> u.getUsername().equals("user"))) {
+                userService.createUserWithRoles(
+                        "Иван", "Иванов", 30, "user", "user", Set.of(userRole)
+                );
             }
         };
     }
